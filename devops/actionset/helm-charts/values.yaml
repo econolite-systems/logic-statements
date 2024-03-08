@@ -1,0 +1,14 @@
+actionSetProcessService:
+  name: ode-action-set-process-service
+  imageRepository: cosysdev.azurecr.io/ode-action-set-process-service
+  service:
+    port: 80
+  probes:
+    enabled: false
+  ingress:
+    host: api.mound-rd.cosysdev.com
+  kafka:
+    groupid: process.action.set
+  resources: {}
+  
+

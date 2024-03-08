@@ -1,0 +1,41 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+	<!-- # SPDX-License-Identifier: MIT -->
+
+	<PropertyGroup>
+		<TargetFramework>net6.0</TargetFramework>
+		<Nullable>enable</Nullable>
+
+		<IsPackable>false</IsPackable>
+
+		<RootNamespace>Econolite.Ode.Domain.LogicStatement.Test</RootNamespace>
+		<Copyright>2023-&lt;&lt;CURRENT_YEAR&gt;&gt; Econolite Systems, Inc.</Copyright>
+	</PropertyGroup>
+
+	<ItemGroup>
+		<PackageReference Include="FluentAssertions" Version="6.8.0" />
+		<PackageReference Include="Microsoft.NET.Test.Sdk" Version="16.11.0" />
+		<PackageReference Include="Moq" Version="4.18.4" />
+		<PackageReference Include="xunit" Version="2.4.1" />
+		<PackageReference Include="xunit.runner.visualstudio" Version="2.4.3">
+			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+			<PrivateAssets>all</PrivateAssets>
+		</PackageReference>
+		<PackageReference Include="coverlet.collector" Version="3.1.0">
+			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+			<PrivateAssets>all</PrivateAssets>
+		</PackageReference>
+	</ItemGroup>
+
+	<ItemGroup>
+		<ProjectReference Include="..\common\Extensions\Extensions.csproj" />
+		<ProjectReference Include="..\Domain.LogicStatement\Domain.LogicStatement.csproj" />
+		<ProjectReference Include="..\Service.LogicStatement\Service.LogicStatement.csproj" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<Reference Include="Microsoft.Extensions.Http">
+			<HintPath>..\..\..\..\..\.nuget\packages\microsoft.extensions.http\6.0.0\lib\netstandard2.0\Microsoft.Extensions.Http.dll</HintPath>
+		</Reference>
+	</ItemGroup>
+
+</Project>

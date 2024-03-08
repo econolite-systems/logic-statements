@@ -1,0 +1,148 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Values.actionSetProcessService.name }}
+data:
+  appsettings.Production.json: |
+    {
+      "Authentication": {
+          "Authority": "{{ .Values.url.authSettings.authority }}"
+      },
+      "Services": {
+          "Configuration": "{{ .Values.url.transportProtocol }}://{{ .Values.url.apiHost }}/{{ .Values.url.configurationPath }}"
+      },
+      "Kafka": {
+          "bootstrap": {
+              "servers": "{{ .Values.kafka.server }}"
+          },
+          "ssl": {
+            "ca": "{{.Values.kafka.ca}}",
+            "certificate": "{{.Values.kafka.certificate}}"
+          },
+          "sasl": {
+              "mechanism": "{{.Values.kafka.security.mechanism}}",
+              "username": "{{ .Values.kafka.userName }}"
+          },
+          "security": {
+              "protocol": "{{.Values.kafka.security.protocol}}",
+              "username": "{{.Values.kafka.userName}}",
+          },
+          "groupId": "{{ .Values.actionSetProcessService.name }}"
+      },
+      "Mongo": {
+        "DbName": "{{ .Values.mongo.databaseName }}"
+      },
+      "TenantId": "{{ .Values.tenantId }}"
+    }
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Values.actionSetProcessService.name }}
+  labels:
+    app: {{ .Values.actionSetProcessService.name }}
+    chart: {{ .Values.actionSetProcessService.name }}
+    release: {{ .Release.Name }}
+ 
+ 
+  annotations:
+ 
+spec:
+  revisionHistoryLimit: 0
+  replicas: {{ .Values.replicaCount | default 1 }}
+  selector:
+    matchLabels:
+      app: {{ .Values.actionSetProcessService.name }}
+      release: {{ .Release.Name }}
+  template:
+    metadata:
+      labels:
+        app: {{ .Values.actionSetProcessService.name }}
+     
+        release: {{ .Release.Name }}
+      annotations:
+
+    spec:
+      topologySpreadConstraints:
+        - maxSkew: 1
+          topologyKey: "kubernetes.io/hostname"
+          whenUnsatisfiable: ScheduleAnyway
+          labelSelector:
+            matchLabels:
+              release: {{ .Release.Name }}
+      imagePullSecrets:
+        - name: {{ .Values.secrets.imagePullSecret }}
+      volumes:
+        - name: config
+          configMap:
+            name: {{ .Values.actionSetProcessService.name }}
+      containers:
+        - name: {{ .Values.actionSetProcessService.name }}
+          image: "{{ .Values.actionSetProcessService.imageRepository }}:{{ .Values.actionSetProcessService.imageTag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          env:
+            - name: Kafka__sasl__password
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.kafka.userName }}
+                  key: password
+            - name: ConnectionStrings__Mongo
+              valueFrom:
+                secretKeyRef:
+                  name: mongo-cs
+                  key: MongoRWConnectionString
+            - name: ConnectionStrings__Redis
+              valueFrom:
+                secretKeyRef:
+                  name: redis-cs
+                  key:  RedisConnection
+            - name: Authentication__ClientId
+              valueFrom:
+                secretKeyRef:
+                  name: authentication
+                  key: clientId
+            - name: Authentication__ClientSecret
+              valueFrom:
+                secretKeyRef:
+                  name: authentication
+                  key: clientSecret
+          volumeMounts:
+            - name: config
+              mountPath: /app/appsettings.Production.json
+              subPath: appsettings.Production.json
+              readOnly: true
+          ports:
+            - name: http
+              containerPort: 80
+              protocol: TCP
+          {{- if .Values.actionSetProcessService.probes.enabled }}
+          livenessProbe:
+            httpGet:
+              path: /
+              port: http
+          readinessProbe:
+            httpGet:
+              path: /
+              port: http
+          {{- end }}
+          resources:
+{{ toYaml .Values.actionSetProcessService.resources | indent 12 }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Values.actionSetProcessService.name }}
+  labels:
+    app: {{ .Values.actionSetProcessService.name }}
+    chart: {{ .Values.actionSetProcessService.name }}
+    release: {{ .Release.Name }}
+spec:
+  type: ClusterIP
+  ports:
+    - port: {{ .Values.actionSetProcessService.service.port }}
+      targetPort: http
+      protocol: TCP
+      name: http
+  selector:
+    app: {{ .Values.actionSetProcessService.name }}
+    release: {{ .Release.Name }}
